@@ -2,6 +2,7 @@ package ratelimit
 
 import (
 	"fmt"
+	"hash/fnv"
 	"net/http"
 	"os"
 	"time"
@@ -299,8 +300,9 @@ func newRatelimit(s Settings, sw Swarmer) *Ratelimit {
 		s.CleanInterval = 0
 		fallthrough
 	case ClusterClientRatelimit:
+		f := fnv.New32()
 		if sw != nil {
-			impl = newClusterRateLimiter(s, sw, "CRL")
+			impl = newClusterRateLimiter(s, sw, string(f.Sum([]byte(s.String()))))
 		} else {
 			fmt.Fprintf(os.Stderr, "ERROR: no -enable-swarm, falling back to no ratelimit for %q\n", s)
 			impl = voidRatelimit{}
